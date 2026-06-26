@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Thiết kế — Phát đề thi</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --border: #E2DED7;
+    --border-strong: #C8C4BC;
+    --text-primary: #1A1916;
+    --text-secondary: #6B6860;
+    --text-muted: #A09D98;
+    --accent: #D4601A;
+    --accent-light: #FBF0EA;
+    --accent-text: #A3440F;
+    --2d-color: #2D6FA3;
+    --2d-bg: #EAF2F9;
+    --3d-color: #7C3FA3;
+    --3d-bg: #F3EDF9;
+    --vid-color: #1A7A5C;
+    --vid-bg: #E6F5F0;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 20px 80px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    max-width: 520px;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-size: clamp(26px, 5vw, 38px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+  .header p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 36px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .step.active { color: var(--text-primary); }
+  .step.done { color: var(--accent); }
+  .step-dot {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    background: var(--surface);
+  }
+  .step.active .step-dot {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+    color: #fff;
+  }
+  .step.done .step-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .step-line {
+    height: 1px; width: 28px;
+    background: var(--border);
+  }
+
+  /* Main card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  /* Category select */
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .cat-btn {
+    position: relative;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 12px 16px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cat-btn:hover { border-color: var(--border-strong); }
+  .cat-btn:active { transform: scale(0.97); }
+
+  .cat-btn.sel-2d { border-color: var(--2d-color); background: var(--2d-bg); }
+  .cat-btn.sel-3d { border-color: var(--3d-color); background: var(--3d-bg); }
+  .cat-btn.sel-video { border-color: var(--vid-color); background: var(--vid-bg); }
+
+  .cat-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+    line-height: 1;
+  }
+  .cat-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+  }
+  .cat-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+  }
+
+  .cat-btn.sel-2d .cat-name { color: var(--2d-color); }
+  .cat-btn.sel-2d .cat-meta { color: var(--2d-color); opacity: 0.7; }
+  .cat-btn.sel-3d .cat-name { color: var(--3d-color); }
+  .cat-btn.sel-3d .cat-meta { color: var(--3d-color); opacity: 0.7; }
+  .cat-btn.sel-video .cat-name { color: var(--vid-color); }
+  .cat-btn.sel-video .cat-meta { color: var(--vid-color); opacity: 0.7; }
+
+  .check-mark {
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 13px;
+    display: none;
+  }
+  .cat-btn.sel-2d .check-mark { display: block; color: var(--2d-color); }
+  .cat-btn.sel-3d .check-mark { display: block; color: var(--3d-color); }
+  .cat-btn.sel-video .check-mark { display: block; color: var(--vid-color); }
+
+  /* Notice */
+  .notice {
+    background: #FEF6EE;
+    border: 1px solid #F5DCCA;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--accent-text);
+    line-height: 1.5;
+  }
+  .notice-icon { flex-shrink: 0; font-size: 15px; margin-top: 1px; }
+
+  /* CTA button */
+  .cta {
+    width: 100%;
+    padding: 14px;
+    background: var(--text-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, opacity 0.15s;
+    letter-spacing: -0.01em;
+  }
+  .cta:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .cta:not(:disabled):hover { background: #333; }
+  .cta:not(:disabled):active { transform: scale(0.98); }
+
+  /* Result screen */
+  #resultScreen { display: none; width: 100%; max-width: 560px; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .result-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .result-cat-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+  .tag-2d { background: var(--2d-bg); color: var(--2d-color); }
+  .tag-3d { background: var(--3d-bg); color: var(--3d-color); }
+  .tag-video { background: var(--vid-bg); color: var(--vid-color); }
+
+  .result-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text-primary);
+  }
+  .result-count {
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .result-count .big-num {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+  }
+  .result-count .small-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .questions-list {
+    padding: 8px 0;
+  }
+  .question-row {
+    display: flex;
+    gap: 16px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+    animation: fadeUp 0.3s ease both;
+  }
+  .question-row:last-child { border-bottom: none; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .question-row:nth-child(1) { animation-delay: 0.05s; }
+  .question-row:nth-child(2) { animation-delay: 0.10s; }
+  .question-row:nth-child(3) { animation-delay: 0.15s; }
+  .question-row:nth-child(4) { animation-delay: 0.20s; }
+  .question-row:nth-child(5) { animation-delay: 0.25s; }
+
+  .q-num {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+  .q-text {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--text-primary);
+  }
+  .q-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    background: var(--bg);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .result-footer {
+    padding: 16px 28px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .result-footer svg { opacity: 0.5; }
+
+  .locked-msg {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 28px 12px 60px; }
+    .card { padding: 22px 18px; }
+    .result-header { padding: 20px 20px 16px; flex-direction: column; gap: 8px; }
+    .result-count { text-align: left; }
+    .question-row { padding: 14px 18px; }
+    .result-footer { padding: 12px 18px; }
+    .cat-btn { padding: 14px 8px 12px; }
+    .cat-name { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-eyebrow">Design Contest 2025</div>
+  <h1>Phát đề thi<br>thiết kế ngẫu nhiên</h1>
+  <p>Chọn đối tượng thi, nhận ngay bộ câu hỏi được rút ngẫu nhiên dành riêng cho bạn.</p>
+</div>
+
+<!-- STEPS -->
+<div class="steps" id="stepIndicator">
+  <div class="step active" id="step1">
+    <div class="step-dot">1</div>
+    <span>Chọn đối tượng</span>
+  </div>
+  <div class="step-line"></div>
+  <div class="step" id="step2">
+    <div class="step-dot">2</div>
+    <span>Nhận đề</span>
+  </div>
+  <div class="step-line"></div>
+  <div class="step" id="step3">
+    <div class="step-dot">3</div>
+    <span>Thực hiện</span>
+  </div>
+</div>
+
+<!-- SELECT SCREEN -->
+<div class="card" id="selectScreen">
+  <div class="section-label">Bạn thi đối tượng nào?</div>
+
+  <div class="cat-grid">
+    <button class="cat-btn" data-cat="2d" onclick="selectCat(this)">
+      <span class="check-mark">✓</span>
+      <span class="cat-icon">✏️</span>
+      <span class="cat-name">2D</span>
+      <span class="cat-meta">5 câu / 15</span>
+    </button>
+    <button class="cat-btn" data-cat="3d" onclick="selectCat(this)">
+      <span class="check-mark">✓</span>
+      <span class="cat-icon">🧊</span>
+      <span class="cat-name">3D</span>
+      <span class="cat-meta">4 câu / 12</span>
+    </button>
+    <button class="cat-btn" data-cat="video" onclick="selectCat(this)">
+      <span class="check-mark">✓</span>
+      <span class="cat-icon">🎬</span>
+      <span class="cat-name">Video</span>
+      <span class="cat-meta">3 câu / 15</span>
+    </button>
+  </div>
+
+  <div class="notice">
+    <span class="notice-icon">⚠️</span>
+    <span>Mỗi người chỉ được nhận đề <strong>một lần duy nhất</strong>. Hãy chắc chắn bạn đã chọn đúng đối tượng trước khi bấm.</span>
+  </div>
+
+  <button class="cta" id="ctaBtn" disabled onclick="generateExam()">
+    Nhận đề ngẫu nhiên
+  </button>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="resultScreen">
+  <div class="result-card">
+    <div class="result-header">
+      <div>
+        <span class="result-cat-tag" id="rTag"></span>
+        <div class="result-title" id="rTitle"></div>
+      </div>
+      <div class="result-count">
+        <div class="big-num" id="rNum"></div>
+        <span class="small-label">câu hỏi</span>
+      </div>
+    </div>
+    <div class="questions-list" id="qList"></div>
+    <div class="result-footer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Đề đã được ghi nhận — chúc bạn thi tốt!
+    </div>
+  </div>
+  <div class="locked-msg">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Đề đã khóa, không thể rút lại
+  </div>
+</div>
+
+<script>
+const DATA = {
+  "2d": {
+    label: "2D", pick: 5,
+    tagClass: "tag-2d",
+    title: "Đề thi — Thiết kế 2D",
+    questions: [
+      { tag: "Branding", text: "Thiết kế bộ nhận diện thương hiệu (logo, màu, font) cho một quán cà phê local phong cách vintage." },
+      { tag: "Poster", text: "Tạo poster sự kiện âm nhạc ngoài trời cho festival mùa hè, kích thước A2, tông màu rực rỡ." },
+      { tag: "Icon", text: "Thiết kế bộ 6 icon flat design cho ứng dụng quản lý công việc cá nhân." },
+      { tag: "UI", text: "Xây dựng layout trang chủ website cho thương hiệu thời trang tối giản — desktop & mobile." },
+      { tag: "Packaging", text: "Thiết kế bao bì hộp trà thảo mộc với minh họa handdrawn, phong cách thân thiện thiên nhiên." },
+      { tag: "Infographic", text: "Tạo infographic mô tả toàn bộ quy trình từ hạt cà phê đến ly thành phẩm." },
+      { tag: "Sticker", text: "Thiết kế bộ sticker Tết Nguyên Đán gồm ít nhất 8 sticker dùng được trên mạng xã hội." },
+      { tag: "Branding", text: "Xây dựng visual identity cho một tổ chức phi lợi nhuận bảo vệ môi trường biển Việt Nam." },
+      { tag: "Editorial", text: "Thiết kế spread 2 trang cho tạp chí thời trang cao cấp, có ảnh và typography nổi bật." },
+      { tag: "Banner", text: "Tạo series 3 banner quảng cáo (sizes: 1200×628, 1080×1080, 1080×1920) cho chiến dịch ra mắt sản phẩm." },
+      { tag: "Menu", text: "Thiết kế thực đơn cho nhà hàng fusion Á–Âu, in hai mặt, phong cách hiện đại tối giản." },
+      { tag: "Illustration", text: "Vẽ illustration phong cách editorial minh họa cho bài báo về tốc độ đô thị hóa tại Việt Nam." },
+      { tag: "Stationery", text: "Thiết kế bộ văn phòng phẩm (danh thiếp, phong bì, tiêu đề thư) cho công ty kiến trúc." },
+      { tag: "Style Guide", text: "Xây dựng style guide màu sắc & typography cho thương hiệu startup công nghệ giáo dục." },
+      { tag: "Packaging", text: "Thiết kế bộ bao bì cho 3 sản phẩm dòng skincare organic — nhất quán nhận diện thương hiệu." },
+    ]
+  },
+  "3d": {
+    label: "3D", pick: 4,
+    tagClass: "tag-3d",
+    title: "Đề thi — Thiết kế 3D",
+    questions: [
+      { tag: "Product", text: "Mô hình và render chiếc ghế Scandinavia với vật liệu gỗ sồi và vải canvas — ánh sáng studio." },
+      { tag: "Interior", text: "Tạo cảnh render nội thất phòng khách theo phong cách Wabi-sabi Nhật Bản, bảng màu trung tính." },
+      { tag: "Packaging 3D", text: "Thiết kế và render bao bì chai nước hoa cao cấp dạng 3D, thể hiện vật liệu thủy tinh & kim loại." },
+      { tag: "Architecture", text: "Xây dựng mô hình kiến trúc 3D cho một tiny house bền vững, có cảnh quan xung quanh." },
+      { tag: "Character", text: "Tạo nhân vật 3D stylized phong cách cartoon cho game mobile casual — đầy đủ A-pose." },
+      { tag: "Automotive", text: "Render xe concept trong môi trường studio ánh sáng studio trắng với bóng đổ kiểm soát." },
+      { tag: "Product", text: "Mô hình hóa bộ đồ ăn (bát, đĩa, muỗng, đũa) với chất liệu gốm sứ thủ công — render trên nền mộc." },
+      { tag: "Motion", text: "Tạo motion loop 3D ngắn dưới 5 giây cho logo thương hiệu nước uống sức khỏe." },
+      { tag: "Environment", text: "Thiết kế cảnh 3D isometric cho một khu phố tương lai nhỏ với xe điện và cây xanh." },
+      { tag: "Product Viz", text: "Render product visualization cho tai nghe wireless cao cấp: 3 góc nhìn, nền trắng sạch." },
+      { tag: "Abstract", text: "Xây dựng cảnh 3D abstract với chủ đề 'dòng chảy và năng lượng' — tự do về hình thức." },
+      { tag: "Exhibition", text: "Mô hình và render một booth triển lãm (3×3m) cho thương hiệu thực phẩm hữu cơ." },
+    ]
+  },
+  "video": {
+    label: "Video", pick: 3,
+    tagClass: "tag-video",
+    title: "Đề thi — Thiết kế Video",
+    questions: [
+      { tag: "Brand Film", text: "Thực hiện video intro thương hiệu 15–30 giây cho startup fintech — tone chuyên nghiệp, hiện đại." },
+      { tag: "Motion Graphics", text: "Tạo motion graphic 60 giây giải thích cơ chế hoạt động của ví điện tử, dành cho người dùng phổ thông." },
+      { tag: "Social", text: "Dựng video dọc (9:16) quảng bá sản phẩm lifestyle, dài 15–30 giây, phù hợp Reels/TikTok." },
+      { tag: "Title Sequence", text: "Thiết kế và dựng title sequence cho series podcast chủ đề văn hóa Đông Nam Á, dài ~20 giây." },
+      { tag: "Ambient", text: "Tạo video loop không tiếng dài 30–60 giây làm background cho màn hình LED triển lãm nghệ thuật." },
+      { tag: "Lyric Video", text: "Thực hiện lyric video cho đoạn hook (~1 phút) một ca khúc indie Việt — typography là nhân vật chính." },
+      { tag: "Animation", text: "Dựng explainer video hoạt hình 2D 90 giây về quy trình phân loại và tái chế rác thải sinh hoạt." },
+      { tag: "Package", text: "Tạo bộ motion graphics cho YouTube channel: lower thirds, transition, end card — nhất quán style." },
+      { tag: "Cinemagraph", text: "Thực hiện cinemagraph từ cảnh thiên nhiên: chỉ một yếu tố chuyển động, loop liền mạch." },
+      { tag: "Teaser", text: "Dựng video teaser 20 giây cho sự kiện âm nhạc chỉ sử dụng typography động và âm thanh — không hình ảnh." },
+      { tag: "Product", text: "Thực hiện video unboxing sản phẩm công nghệ có motion overlay chú thích tính năng, dài 60 giây." },
+      { tag: "Documentary", text: "Dựng short-form documentary dưới 3 phút về một nghề thủ công truyền thống đang mai một." },
+      { tag: "Infographic", text: "Tạo animated infographic về thống kê ngành sáng tạo Việt Nam — dài 60–90 giây, dữ liệu tự thiết kế." },
+      { tag: "VJ Loop", text: "Tạo VJ loop trừu tượng 30 giây đồng bộ với nhịp nhạc điện tử 128 BPM cho sự kiện." },
+      { tag: "Broadcast", text: "Thiết kế opening sequence 15–20 giây cho gameshow truyền hình phong cách năng động, hiện đại." },
+    ]
+  }
+};
+
+let selected = null;
+let used = false;
+
+function selectCat(el) {
+  if (used) return;
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.className = 'cat-btn';
+  });
+  const cat = el.dataset.cat;
+  el.classList.add('sel-' + cat);
+  selected = cat;
+  document.getElementById('ctaBtn').disabled = false;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function generateExam() {
+  if (!selected || used) return;
+  used = true;
+
+  const cfg = DATA[selected];
+  const picked = shuffle(cfg.questions).slice(0, cfg.pick);
+
+  document.getElementById('rTag').textContent = cfg.label;
+  document.getElementById('rTag').className = 'result-cat-tag ' + cfg.tagClass;
+  document.getElementById('rTitle').textContent = cfg.title;
+  document.getElementById('rNum').textContent = cfg.pick;
+
+  const list = document.getElementById('qList');
+  list.innerHTML = picked.map((q, i) => `
+    <div class="question-row" style="animation-delay:${0.05 + i * 0.07}s">
+      <div class="q-num">${i + 1}</div>
+      <div class="q-text">
+        <div class="q-tag">${q.tag}</div><br>
+        ${q.text}
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('selectScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+
+  document.getElementById('step1').className = 'step done';
+  document.getElementById('step2').className = 'step done';
+  document.getElementById('step3').className = 'step active';
+}
+</script>
+</body>
+</html>
